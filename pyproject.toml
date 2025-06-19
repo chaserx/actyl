@@ -6,4 +6,17 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pygithub>=2.6.1",
+    "rich>=14.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
 ]
