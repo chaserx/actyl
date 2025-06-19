@@ -1,0 +1,8 @@
+Questions: 
+
+- How will these user stats be consumed / viewed? Command Line? Company Dashboard? Manager reporting tool?
+- Do we need to support getting multiple GitHub user names in batch? 
+- The background section mentions that an API key is not necessary, but an API key will provide 
+a higher API requestlimit. Confirming that this OK for now, but we may want to revisit that requirement in the future. 
+- Product may or may not care about absolute performance, and it's not mentioned in the acceptance criteria, but 
+do we know if there is a concern about overall performance like an SLA or another target? 
