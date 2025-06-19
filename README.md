@@ -10,6 +10,8 @@ Provides visibility into engineering activity. It tracks development trends acro
 
 ## Installation
 
+0. Install the pre-requsites (Python 3.13+, uv)
+
 1. Clone the repository:
 ```bash
 git clone <repository-url>
@@ -28,6 +30,20 @@ uv sync
 ```bash
 export GITHUB_TOKEN="your_token_here"
 ```
+
+## Developing
+
+### Local option (Mac)
+
+- Assumes that [`mise`](https://mise.jdx.dev/) is already installed. If you're using `asdf`, the `.python-version` file will 
+help install the proper version of Python. Follow the runtime manager installation steps and/or runtime installation steps. 
+- Install `uv` and run `uv sync`. 
+
+### DevContainer
+
+A DevContainer is available for developing and/or running the command line script, `main.py`. 
+
+Building the devcontainer will install all of the dependencies necessary for development and command line usage.
 
 ## Dependencies
 
