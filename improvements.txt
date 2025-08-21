@@ -1,0 +1,137 @@
+areas for improvement:
+- `main.py` - Nested loops. Can be fine, not always n^2, depends on inputs. If we had large
+number of stats to return then yeah might be a problem. 
+    - Pros: readable, understandable. 
+    - Potential changes: 
+        - maybe use list comprehension (less readble IMHO)
+        - refactor the data structure
+        - maybe use `itertools.product` could be good for nested for loops
+            - [itertools](https://docs.python.org/3/library/itertools.html) is like Ruby enumerable module
+- `main.py` - Extract table display logic into a function
+    - Pros: improve readability (potentially), reduce the responsibility of the main method
+- `main.py` - 
+- `main.py` - Support more than one username at a time
+    - might require to update design such that:
+        - ActivityTracker#get_user_activity takes a username and it calls setup_connection rather than the initializer
+            - or loop over username list and create a new ActivityTracker for each username
+    - space separated list?
+        use argparse
+        ```python
+        import sys
+        improt argparse
+
+        parser = argparse.ArgumentParser(
+                    prog='Actyl',
+                    description='A GitHub Activity Tracker',
+                    epilog='Get trackin')
+
+        parser.addArgument("-U" "--users", nargs="+")
+        args = parser.parse_args()
+        users = args.users
+
+        # do other things
+        ```
+    - text file? 
+        use readlines
+
+        ```python
+        with open('sample.txt', 'r') as file:
+            lines = file.readlines()
+            print(lines)
+        ```
+    - CSV file?
+        ```python
+        import csv
+
+        with open("path_to_csv_file.csv", r, newline="") as csvfile:
+            csv_reader = csv.reader(csvfile)
+
+            for row in csv_reader: 
+                print(row)
+
+        ---
+
+        # or use pandas
+
+        import pandas as pd
+
+        df = pd.read_csv('path_to_csv_file.csv')
+        
+        for _, row in df.iterrows()
+            # do something
+            print(row["columnName])
+        ```
+    - YAML file?
+        ```python
+        import yaml
+
+        with open("path_to_yaml_file.yml", "r") as yaml_file
+            configs = yaml.safe_load(yaml_file)
+
+            usernames = configs["team"]["usernames"]
+        ```
+    - TOML file?
+        ```toml
+        [stats]
+        most_common_length = 3
+
+        [team]
+        usernames = ["chaserx", "cheshire137"]
+        ```
+
+        ```python
+        import tomli
+        with open("actyl.toml", mode="rb") as conf_file:
+            config = tomli.load(conf_file)
+        
+        >>>> config["team"]["usernames"]
+        ["chaserx", "cheshire137"]
+        ```
+- `main.py` - with multiple users, might want to use async wrapper around the github library
+    - specifically because it's an IO task
+
+    ```python
+    import asyncio
+
+    async def main():
+        print('Hello ...')
+        await asyncio.sleep(1)
+        print('... World!')
+
+    asyncio.run(main())
+    ```
+
+    ```python
+    import asyncio
+    import aiohttp
+
+    async def main():
+        # setup some variables to hold data
+
+        # get list of usernames
+        
+        # get user activity asynchoronously
+        # likely requires some changes to the ActivityTracker class: 
+        #   required parameters for new and get_user_activity methods
+        #   async await support
+        async with ActivityTracker() as tracker:
+            tasks = [tracker.get_user_event_activity(username) for username in usernames]
+            activity_data = asyncio.gather(*tasks)
+
+            for user in activity_data: 
+                # print table of data
+
+    asyncio.run(main())
+    ```
+- `activity_tracker.py`
+    - To support multiple users: 
+        - Accept a list of users either from ARGV or a config file
+        - Move `_setup_connection()` method call to the `get_user_event_activity()` method
+        - `get_user_event_activity` should take a username as an argument
+        - Extract "check connection" logic to a method. Maybe it takes a username argument. Maybe it checks the connection differently. 
+    - General: 
+        - I think the `if/else` event counter logic could just be simplified to `repo_stats['counter'][event_type] += 1` and skip all of the if/else stuff
+        - Account ownership: the idea to split the repo name from `username/repo` to check against the current username is a nice hack, 
+        but I think there's probably something in the GitHub payload that could be used instead. 
+        - The rate limit info is a good addition, but not within the original spec.
+        - Do you need to use a GitHub library? Maybe there could 

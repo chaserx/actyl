@@ -1,10 +1,9 @@
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from github import Github, GithubException, Auth
+from unittest.mock import Mock, patch
+from github import Github, GithubException
 from github.AuthenticatedUser import AuthenticatedUser
 from github.NamedUser import NamedUser
-from collections import Counter
 
 from activity_tracker import ActivityTracker
 
@@ -35,43 +34,43 @@ class TestActivityTracker:
     def sample_events(self):
         """Sample GitHub events for testing."""
         events = []
-        
+
         # Push event
         push_event = Mock()
         push_event.type = "PushEvent"
         push_event.repo.name = "testuser/repo1"
         events.append(push_event)
-        
+
         # Pull request event
         pr_event = Mock()
         pr_event.type = "PullRequestEvent"
         pr_event.repo.name = "testuser/repo1"
         events.append(pr_event)
-        
+
         # Issue comment event
         comment_event = Mock()
         comment_event.type = "IssueCommentEvent"
         comment_event.repo.name = "otheruser/repo2"
         events.append(comment_event)
-        
+
         # Issue event
         issue_event = Mock()
         issue_event.type = "IssueEvent"
         issue_event.repo.name = "testuser/repo3"
         events.append(issue_event)
-        
+
         # Pull request review event
         review_event = Mock()
         review_event.type = "PullRequestReviewEvent"
         review_event.repo.name = "testuser/repo1"
         events.append(review_event)
-        
+
         # Unknown event type
         unknown_event = Mock()
         unknown_event.type = "UnknownEvent"
         unknown_event.repo.name = "testuser/repo4"
         events.append(unknown_event)
-        
+
         return events
 
     def test_init_with_token(self):
@@ -79,13 +78,13 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             tracker = ActivityTracker("testuser", "test_token")
-            
+
             # Check that Github was called with the correct parameters
             mock_github_class.assert_called_once()
             call_args = mock_github_class.call_args
@@ -102,13 +101,13 @@ class TestActivityTracker:
             with patch('activity_tracker.Github') as mock_github_class:
                 mock_github = Mock()
                 mock_github_class.return_value = mock_github
-                
+
                 mock_user = Mock(spec=AuthenticatedUser)
                 mock_user.login = "testuser"
                 mock_github.get_user.return_value = mock_user
-                
+
                 tracker = ActivityTracker("testuser")
-                
+
                 # Check that Github was called with the correct parameters
                 mock_github_class.assert_called_once()
                 call_args = mock_github_class.call_args
@@ -124,13 +123,13 @@ class TestActivityTracker:
             with patch('activity_tracker.Github') as mock_github_class:
                 mock_github = Mock()
                 mock_github_class.return_value = mock_github
-                
+
                 mock_user = Mock(spec=AuthenticatedUser)
                 mock_user.login = "testuser"
                 mock_github.get_user.return_value = mock_user
-                
+
                 tracker = ActivityTracker("testuser")
-                
+
                 mock_github_class.assert_called_once_with(per_page=100)
                 assert tracker.token is None
 
@@ -139,12 +138,12 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             # Simulate 401 Unauthorized error
             mock_github.get_user.side_effect = GithubException(
                 status=401, data={"message": "Bad credentials"}
             )
-            
+
             with pytest.raises(ValueError, match="Invalid GitHub token"):
                 ActivityTracker("testuser", "invalid_token")
 
@@ -153,12 +152,12 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             # Simulate 403 Forbidden error
             mock_github.get_user.side_effect = GithubException(
                 status=403, data={"message": "API rate limit exceeded"}
             )
-            
+
             with pytest.raises(ValueError, match="GitHub API rate limit exceeded"):
                 ActivityTracker("testuser", "test_token")
 
@@ -167,12 +166,12 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             # Simulate 500 Internal Server Error
             mock_github.get_user.side_effect = GithubException(
                 status=500, data={"message": "Internal server error"}
             )
-            
+
             with pytest.raises(ConnectionError, match="Failed to connect to GitHub API"):
                 ActivityTracker("testuser", "test_token")
 
@@ -181,10 +180,10 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             # Simulate unexpected exception
             mock_github.get_user.side_effect = Exception("Network error")
-            
+
             with pytest.raises(ConnectionError, match="Unexpected error connecting to GitHub"):
                 ActivityTracker("testuser", "test_token")
 
@@ -194,32 +193,32 @@ class TestActivityTracker:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
             mock_github.get_user.return_value = mock_authenticated_user
-            
+
             # Mock the events
             mock_events = Mock()
             mock_events.__iter__ = lambda self: iter(sample_events)
             mock_authenticated_user.get_events.return_value = mock_events
-            
+
             tracker = ActivityTracker("testuser", "test_token")
             result = tracker.get_user_event_activity()
-            
+
             # Verify the result structure
             assert 'stats' in result
             assert len(result['stats']) == 4  # 4 unique repositories
-            
+
             # Find repo1 stats
             repo1_stats = next((s for s in result['stats'] if s['name'] == 'testuser/repo1'), None)
             assert repo1_stats is not None
             assert repo1_stats['counter']['pushes'] == 1
             assert repo1_stats['counter']['pull_requests'] == 1
             assert repo1_stats['counter']['pull_request_reviews'] == 1
-            assert repo1_stats['owned'] == True
-            
+            assert repo1_stats['owned'] is True
+
             # Find repo2 stats
             repo2_stats = next((s for s in result['stats'] if s['name'] == 'otheruser/repo2'), None)
             assert repo2_stats is not None
             assert repo2_stats['counter']['issue_comments'] == 1
-            assert repo2_stats['owned'] == False
+            assert repo2_stats['owned'] is False
 
     def test_get_user_event_activity_named_user(self, mock_named_user, sample_events):
         """Test getting event activity for named user (public events only)."""
@@ -227,15 +226,15 @@ class TestActivityTracker:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
             mock_github.get_user.return_value = mock_named_user
-            
+
             # Mock the events
             mock_events = Mock()
             mock_events.__iter__ = lambda self: iter(sample_events)
             mock_named_user.get_public_events.return_value = mock_events
-            
+
             tracker = ActivityTracker("testuser", "test_token")
-            result = tracker.get_user_event_activity()
-            
+            tracker.get_user_event_activity()
+
             # Verify that get_public_events was called instead of get_events
             mock_named_user.get_public_events.assert_called_once()
             mock_named_user.get_events.assert_not_called()
@@ -245,7 +244,7 @@ class TestActivityTracker:
         tracker = ActivityTracker.__new__(ActivityTracker)
         tracker.github = None
         tracker.user = None
-        
+
         with pytest.raises(RuntimeError, match="GitHub connection not established"):
             tracker.get_user_event_activity()
 
@@ -254,11 +253,11 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             # Mock rate limit response
             mock_rate_limit = Mock()
             mock_rate_limit.core.limit = 5000
@@ -267,10 +266,10 @@ class TestActivityTracker:
             mock_rate_limit.search.limit = 30
             mock_rate_limit.search.remaining = 25
             mock_github.get_rate_limit.return_value = mock_rate_limit
-            
+
             tracker = ActivityTracker("testuser", "test_token")
             result = tracker.get_rate_limit_info()
-            
+
             assert result['limit'] == 5000
             assert result['remaining'] == 4500
             assert result['reset_time'] is None
@@ -281,7 +280,7 @@ class TestActivityTracker:
         """Test getting rate limit info without established connection."""
         tracker = ActivityTracker.__new__(ActivityTracker)
         tracker.github = None
-        
+
         with pytest.raises(RuntimeError, match="GitHub connection not established"):
             tracker.get_rate_limit_info()
 
@@ -290,18 +289,18 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             # Simulate GitHub API error
             mock_github.get_rate_limit.side_effect = GithubException(
                 status=500, data={"message": "Internal server error"}
             )
-            
+
             tracker = ActivityTracker("testuser", "test_token")
-            
+
             with pytest.raises(RuntimeError, match="Failed to fetch rate limit info"):
                 tracker.get_rate_limit_info()
 
@@ -310,20 +309,20 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             tracker = ActivityTracker("testuser", "test_token")
-            
+
             # Verify initial state
             assert tracker.github is not None
             assert tracker.user is not None
-            
+
             # Close the connection
             tracker.close()
-            
+
             # Verify final state
             assert tracker.github is None
             assert tracker.user is None
@@ -334,15 +333,15 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             with ActivityTracker("testuser", "test_token") as tracker:
                 assert tracker.github is not None
                 assert tracker.user is not None
-            
+
             # Connection should be closed after exiting context
             assert tracker.github is None
             assert tracker.user is None
@@ -353,32 +352,32 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             # Create events for all supported types
             events = []
             event_types = [
-                "PushEvent", "PullRequestEvent", "IssueCommentEvent", 
+                "PushEvent", "PullRequestEvent", "IssueCommentEvent",
                 "IssueEvent", "PullRequestReviewCommentEvent", "PullRequestReviewEvent"
             ]
-            
+
             for event_type in event_types:
                 event = Mock()
                 event.type = event_type
                 event.repo.name = "testuser/testrepo"
                 events.append(event)
-            
+
             # Mock the events
             mock_events = Mock()
             mock_events.__iter__ = lambda self: iter(events)
             mock_user.get_events.return_value = mock_events
-            
+
             tracker = ActivityTracker("testuser", "test_token")
             result = tracker.get_user_event_activity()
-            
+
             # Verify all event types are counted
             repo_stats = result['stats'][0]
             assert repo_stats['counter']['pushes'] == 1
@@ -393,43 +392,43 @@ class TestActivityTracker:
         with patch('activity_tracker.Github') as mock_github_class:
             mock_github = Mock()
             mock_github_class.return_value = mock_github
-            
+
             mock_user = Mock(spec=AuthenticatedUser)
             mock_user.login = "testuser"
             mock_github.get_user.return_value = mock_user
-            
+
             # Create events for owned and non-owned repos
             events = []
-            
+
             # Owned repo (case insensitive)
             owned_event = Mock()
             owned_event.type = "PushEvent"
             owned_event.repo.name = "TestUser/owned-repo"
             events.append(owned_event)
-            
+
             # Non-owned repo
             non_owned_event = Mock()
             non_owned_event.type = "PushEvent"
             non_owned_event.repo.name = "otheruser/non-owned-repo"
             events.append(non_owned_event)
-            
+
             # Mock the events
             mock_events = Mock()
             mock_events.__iter__ = lambda self: iter(events)
             mock_user.get_events.return_value = mock_events
-            
+
             tracker = ActivityTracker("testuser", "test_token")
             result = tracker.get_user_event_activity()
-            
+
             # Verify owned status
             owned_repo = next((s for s in result['stats'] if s['name'] == 'TestUser/owned-repo'), None)
             non_owned_repo = next((s for s in result['stats'] if s['name'] == 'otheruser/non-owned-repo'), None)
-            
+
             assert owned_repo is not None
             assert non_owned_repo is not None
-            assert owned_repo['owned'] == True
-            assert non_owned_repo['owned'] == False
+            assert owned_repo['owned'] is True
+            assert non_owned_repo['owned'] is False
 
 
 if __name__ == "__main__":
-    pytest.main([__file__]) 
+    pytest.main([__file__])

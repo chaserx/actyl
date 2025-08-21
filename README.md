@@ -10,11 +10,11 @@ Provides visibility into engineering activity. It tracks development trends acro
 
 ## Installation
 
-0. Install the pre-requsites (Python 3.13+, uv)
+0. Install the pre-requsites (Python 3.13+, [uv](https://docs.astral.sh/uv/))
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone git@github.com:chaserx/actyl.git
 cd actyl
 ```
 
@@ -31,17 +31,19 @@ uv sync
 export GITHUB_TOKEN="your_token_here"
 ```
 
+Setting your `GITHUB_TOKEN` is optional, but necessary for tracking private repositories.
+
 ## Developing
 
 ### Local option (Mac)
 
-- Assumes that [`mise`](https://mise.jdx.dev/) is already installed. If you're using `asdf`, the `.python-version` file will 
-help install the proper version of Python. Follow the runtime manager installation steps and/or runtime installation steps. 
-- Install `uv` and run `uv sync`. 
+- Assumes that [`mise`](https://mise.jdx.dev/) is already installed. If you're using `asdf`, the `.python-version` file will
+help install the proper version of Python. Follow the runtime manager installation steps and/or runtime installation steps.
+- Install `uv` and run `uv sync`.
 
 ### DevContainer
 
-A DevContainer is available for developing and/or running the command line script, `main.py`. 
+A DevContainer is available for developing and/or running the command line script, `main.py`.
 
 Building the devcontainer will install all of the dependencies necessary for development and command line usage.
 
@@ -59,7 +61,7 @@ from activity_tracker import ActivityTracker
 
 with ActivityTracker(username=USERNAME) as tracker:
     print(f"Connecting as: {username}")
-    
+
     # Get user public event activity
     user_activity = tracker.get_user_event_activity()
     print(f"User activity stats: {user_activity['stats']})
@@ -69,7 +71,7 @@ with ActivityTracker(username=USERNAME) as tracker:
 
 Run the main application:
 ```bash
-uv run ./main.py cheshire137
+uv run ./main.py -u cheshire137
 ```
 
 The output of that command should be:
