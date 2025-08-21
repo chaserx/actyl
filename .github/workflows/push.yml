@@ -1,0 +1,17 @@
+name: Push
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up Python via uv
+        uses: astral-sh/setup-uv
+        with:
+          python-version: "3.13"
+          cache-dependency-path: "pyproject.toml"
+      - name: Install dependencies
+        run: uv sync
+      - name: Run tests
+        run: uv run pytest
